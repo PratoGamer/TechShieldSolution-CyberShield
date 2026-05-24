@@ -1,0 +1,21 @@
+﻿<div class="d-flex flex-column gap-2">
+
+	<!-- ForEach para Actualizar Automaticamente -->
+	@foreach(var incidencia in ListaIncidencias)
+	{
+		<div class="alert alert-danger alert-dismissible fade show" role="alert">
+
+			<span class="fw-bold">Incidencia Detectada:</span> @incidencia
+
+		</div>
+	}
+
+</div>
+
+@code {
+
+	// Recibir Parametros del Padre
+	[Parameter]
+	public List<String> ListaIncidencias { get; set; } = new();
+
+}
