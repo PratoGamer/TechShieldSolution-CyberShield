@@ -1,12 +1,41 @@
-﻿<div class="bg-secondary bg-opacity-10 p-2 rounded-3 shadow-sm text-center mb-3 border border-secondary border-opacity-25">
+﻿@using System.IO
+@using Services
+@inject LogService logService
+
+<div class="bg-secondary bg-opacity-10 p-2 rounded-3 shadow-sm text-center mb-3 border border-secondary border-opacity-25">
 
 	<h3 class="h5 text-danger fw-semibold">
-		Control de Eventos
+		Control de Eventos en Tiempo Real
 	</h3>
 
-	<button class="btn btn-danger btn-sm px-3 py-2 shadow-sm" @onclick="DispararIncidencia">
-		<i class="bi bi-bell-fill me-2"></i>Disparar Incidencia
-	</button>
+	<div class="d-flex justify-content-center gap-2 mb-3">
+
+		<button class="btn btn-success btn-sm px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2" 
+				@onclick="IniciarMonitoreo"
+				disabled="@monitoreoActivo">
+
+				@if(monitoreoActivo){
+
+				<span><i class="bi bi-box-arrow-in-down me-2"></i> Leyendo Archivos...</span>
+
+				}else
+				{
+
+				<span><i class="bi bi-file-ruled me-2"></i> Iniciar Lectura</span>
+
+				}
+
+		</button>
+
+		<button class="btn btn-danger btn-sm px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2"
+				@onclick="PararMonitoreo"
+				disabled="@(!monitoreoActivo)">
+
+			<span><i class="bi bi-stop-circle me-2"></i> Detener Lectura</span>
+
+		</button>
+
+	</div>
 
 	<div class="card bg-transparent border border-secondary border-opacity-25 rounded-3 m-2">
 
@@ -24,6 +53,7 @@
 @code {
 	private List<String> listaIncidencias = new List<String>();
 	private String codigo = "ERR_AUTH_FAIL";
+	private bool monitoreoActivo = false;
 
 	private async Task DispararIncidencia()
 	{
@@ -33,6 +63,16 @@
 
 		// Guardar un Archivo de Log
 		// Hacer algo
+	}
+
+	private async Task IniciarMonitoreo()
+	{
+		monitoreoActivo = true;
+	}
+
+	private async Task PararMonitoreo()
+	{
+		monitoreoActivo = false;
 	}
 
 }
