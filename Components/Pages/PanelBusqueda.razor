@@ -1,4 +1,8 @@
-﻿<!-- Panel Para Buscar Errores y Errores Mas Frecuentes -->
+﻿<!-- Librerias y Dependencias a Usar -->
+@using Services
+@inject MonitorEstado MonitorEstado
+
+<!-- Componente para Buscar Errores y Errores Mas Frecuentes -->
 <div class="card bg-secondary bg-opacity-10 border-secondary border-opacity-25 rounded-3 p-4 mb-4">
 
 	<!-- Buscador de Errores -->
@@ -35,7 +39,7 @@
 		</div>
 	}
 
-	<!-- Mostrar Errores Mas Frecuentes -->
+	<!-- Errores Mas Frecuentes -->
 	<div class="mt-2">
 
 		<h4 class="h6 text-uppercase fw-bold text-secondary mb-3 d-flex align-items-center gap-2">
@@ -45,15 +49,23 @@
 	</div>
 
 	<div class="table-responsive rounded-3 border border-secondary border-opacity-25 shadow-sm">
+
+		<!-- Tabla -->
 		<table class="table table-dark table-striped table-hover m-0 table-borderless">
+
 			<thead class="table-light bg-opacity-10 border-bottom border-secondary border-opacity-25">
+
 				<tr>
 					<th scope="col" class="text-muted ps-3">Posicion</th>
 					<th scope="col" class="text-muted ps-3">Código</th>
 					<th scope="col" class="text-muted ps-3">Frecuencia</th>
 				</tr>
+
 			</thead>
+
 			<tbody>
+
+				<!-- ForEach para Recorres los Items -->
 				@{ int posicion = 1;}
 				@foreach (var items in Incidentes)
 				{
@@ -70,44 +82,72 @@
 							</span>
 						</td>
 					</tr>
+
 					posicion++;
+
 				}
+
 			</tbody>
+
 		</table>
+
 	</div>
-
-
 
 </div>
 
 
 @code {
-
+	// Variables a Usar
 	private String codigoBusqueda = "";
 	private String codigoEncontrado = "";
 	private int vecesOcurrido = -1;
 	private bool busquedaRealizada = false;
 
-	private readonly Dictionary<string, int> Errores = new(StringComparer.OrdinalIgnoreCase)
-	{
-		{ "ERR-404", 14 },
-		{ "ERR-500", 3 },
-		{ "ERR-102", 27 },
-		{ "ERR-401", 8 }
-	};
-
 	private List<KeyValuePair<string, int>> Incidentes { get; set; } = new();
 
+	// Funcion al Iniciar el Componente
 	protected override void OnInitialized()
 	{
-		Incidentes = Errores.OrderByDescending(x => x.Value).Take(5).ToList();
+		MonitorEstado.onStateChanged += RecalcularPanel;
+
+		RecalcularPanel();
 	}
 
-	private async Task BuscarCodigo()
+	// Funcion para Recalcular el Panel de Errores
+	private void RecalcularPanel()
 	{
+		// Obtener los Errores Mas Frecuentes
+		Incidentes = MonitorEstado.contadorErrores.OrderByDescending(x => x.Value).Take(5).ToList();
+
+		// Actualizar el Contador
+		if (busquedaRealizada && !string.IsNullOrWhiteSpace(codigoEncontrado))
+		{
+			if (MonitorEstado.contadorErrores.TryGetValue(codigoEncontrado, out int conteo))
+			{
+				vecesOcurrido = conteo;
+			}
+			else
+			{
+				vecesOcurrido = -1;
+			}
+
+		}
+
+		// Repintar la Tabla
+		StateHasChanged();
+	}
+
+	private void BuscarCodigo()
+	{
+		// Campo Vacio
+		if (string.IsNullOrWhiteSpace(codigoBusqueda))
+		{
+			return;
+		}
+
 		codigoEncontrado = codigoBusqueda.Trim().ToUpper();
 
-		if (Errores.TryGetValue(codigoEncontrado, out int conteo))
+		if (MonitorEstado.contadorErrores.TryGetValue(codigoEncontrado, out int conteo))
 		{
 			vecesOcurrido = conteo;
 		}
@@ -117,6 +157,12 @@
 		}
 
 		busquedaRealizada = true;
+	}
+
+	// Limpiar Eventos
+	public void LimpiarEventos()
+	{
+		MonitorEstado.onStateChanged -= RecalcularPanel;
 	}
 
 }

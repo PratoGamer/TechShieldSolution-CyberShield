@@ -1,19 +1,24 @@
-﻿using Microsoft.Maui.Controls.Shapes;
+﻿// Librerias de C#
+using Microsoft.Maui.Controls.Shapes;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
+// Servicio de los Archivos Log
 namespace TechShieldSolution_CyberShield.Services
 {
     public class LogService
     {
 
+        // Leer Archivos Log de Forma Asincrona
         public async Task<List<string>> LeerLogAsincrono(string rutaArchivo)
         {
+            // Lista de Lineas para el Archivo
             var lineas = new List<string>();
 
+            // Verificar si el Archivo o Ruta Existe
             if (string.IsNullOrWhiteSpace(rutaArchivo) || !File.Exists(rutaArchivo))
             {
 

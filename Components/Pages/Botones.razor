@@ -1,4 +1,11 @@
-﻿<div class="card bg-secondary bg-opacity-10 border-secondary border-opacity-25 rounded-3 p-4 mb-4">
+﻿<!-- Librerias y Dependencias a Usar -->
+@using System.IO
+@using System.Text
+@using Services
+@inject MonitorEstado MonitorEstado
+
+<!-- Componente de Botones para Guardar y Salir -->
+<div class="card bg-secondary bg-opacity-10 border-secondary border-opacity-25 rounded-3 p-4 mb-4">
 
 	<div class="d-flex justify-content-between align-items-center gap-3">
 
@@ -20,15 +27,67 @@
 
 	private async Task GenerarReporte()
 	{
-		// Crear el Archivo de Cierre de datos .txt y .dat
+		// Intentar Crear el Reporte
+		try
+		{
+			await GuardarTxtAsincrono();
+			System.Diagnostics.Debug.WriteLine($"TXT Creado con Exito");
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"TXT Error: {ex.Message}");
+		}
 
 	}
 
 	private async Task SalirAplicacion()
 	{
-		// Guardar Todos los Datos Necesarios antes de Cerrar
+		// Crear el Reporte de Igual Manera
+		try
+		{
+			await GuardarTxtAsincrono();
+			System.Diagnostics.Debug.WriteLine($"TXT Creado con Exito");
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"TXT Error: {ex.Message}");
+		}
 
+		// Salir de la App
 		System.Environment.Exit(0);
+	}
+
+	private async Task GuardarTxtAsincrono()
+	{
+		// Ubicacion de la Carpeta de Descargas del Usuario
+		string perfilUsuario = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+		string rutaReporte = Path.Combine(perfilUsuario, "Downloads", "reporteAuditoria.txt");
+
+		// Contructor para los TXT
+		StringBuilder contenido = new StringBuilder();
+
+		// Formatear Contenido
+		string fechaActual = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+		contenido.AppendLine($" --- Reporte de Auditoria --- ");
+		contenido.AppendLine($" - Fecha y Hora: {fechaActual} - ");
+		contenido.AppendLine($"");
+
+		// Ordenar Errores Alfabeticamente
+		var erroresOrdenados = MonitorEstado.contadorErrores.OrderBy(error => error.Key);
+
+		// ForEach para Agregarlos
+		foreach (var error in erroresOrdenados)
+		{
+			contenido.AppendLine($" Codigo: {error.Key, -20} | Apariciones: {error.Value} - ");
+		}
+
+		// Fin del Reporte
+		contenido.AppendLine($"");
+		contenido.AppendLine($"Fin");
+
+		// Crear o Sobreescribir el Archivo TXT
+		await File.WriteAllTextAsync(rutaReporte, contenido.ToString(), Encoding.UTF8);
+
 	}
 
 

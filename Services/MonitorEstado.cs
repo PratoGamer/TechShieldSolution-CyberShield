@@ -1,7 +1,9 @@
-﻿using System;
+﻿// Librerias de C#
+using System;
 using System.Collections.Generic;
 using System.Text;
 
+// Servicio para Monitorear el Estado de los Errores
 namespace TechShieldSolution_CyberShield.Services
 {
     public class MonitorEstado
@@ -40,7 +42,7 @@ namespace TechShieldSolution_CyberShield.Services
         }
 
         // Actualizar el Contador de Errores
-        public async Task ActualizarContador(string codigo, int cantidad)
+        public void ActualizarContador(string codigo, int cantidad)
         {
             // Verificar que el Codigo Exista
             if (contadorErrores.ContainsKey(codigo))
@@ -50,7 +52,7 @@ namespace TechShieldSolution_CyberShield.Services
         }
 
         // Agregar Alertas
-        public async Task AgregarAlertaAsincrono(string nuevaAlerta)
+        public void AgregarAlerta(string nuevaAlerta)
         {
             // Veririficar que no Hayan Duplicados
             if (!listaIncidencias.Contains(nuevaAlerta))
@@ -62,13 +64,13 @@ namespace TechShieldSolution_CyberShield.Services
         }
 
         // Evitar que se Escriba el Mismo Codigo de Error
-        public async Task<bool> Reportado(string codigo)
+        public bool Reportado(string codigo)
         {
             return listaIncidencias.Any(alerta => alerta.Contains(codigo, StringComparison.OrdinalIgnoreCase));
         }
 
         // Limpiar Todos los Datos
-        public async Task LimpiarIncidenciasAsincrono()
+        public void LimpiarIncidencias()
         {
             listaIncidencias.Clear();
             NotificarCambioEstado();

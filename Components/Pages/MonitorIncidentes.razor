@@ -1,8 +1,10 @@
-﻿@using System.IO
+﻿<!-- Librerias y Dependencias a Usar -->
+@using System.IO
 @using Services
 @inject LogService LogService
 @inject MonitorEstado MonitorEstado
 
+<!-- Componente del Control de Eventos -->
 <div class="bg-secondary bg-opacity-10 p-2 rounded-3 shadow-sm text-center mb-3 border border-secondary border-opacity-25">
 
 	<h3 class="h5 text-danger fw-semibold">
@@ -44,6 +46,7 @@
 			<h4 class="h6 text-uppercase fw-bold text-secondary m-0">Historial de Alertas</h4>
 		</div>
 
+		<!-- Agregar el Componente de Notificacion -->
 		<Notificacion ListaIncidencias="MonitorEstado.listaIncidencias" />
 
 	</div>
@@ -56,6 +59,7 @@
 	// Ruta de los Archivos Log
 	private string rutaArchivoLog = "";
 
+	// Funcion al Iniciar el Componente
 	protected override void OnInitialized()
 	{
 		// Obtener la Carpeta de Descargas del Usuario
@@ -98,19 +102,19 @@
 						int contApariciones = LineasArchivo.Count(linea => linea.Contains(codigoActual, StringComparison.OrdinalIgnoreCase));
 
 						// Guardar el Conteo en el Diccionario
-						await MonitorEstado.ActualizarContador(codigoActual, contApariciones);
+						MonitorEstado.ActualizarContador(codigoActual, contApariciones);
 
 						// Verificar si el Codigo Aparece mas de 50 Veces
 						if (contApariciones >= 2)
 						{
-							bool reportado = await MonitorEstado.Reportado(codigoActual);
+							bool reportado = MonitorEstado.Reportado(codigoActual);
 
 							// Verificar si ya fue Reportado para Evitar Repeticones
 							if (!reportado)
 							{
 								string horaActual = DateTime.Now.ToString("HH:mm:ss");
 								string nuevaAlerta = $"¡ALERTA DE SEGURIDAD! El Evento {codigoActual}: {horaActual}, ha superado las 50 apariciones críticas.";
-								await MonitorEstado.AgregarAlertaAsincrono(nuevaAlerta);
+								MonitorEstado.AgregarAlerta(nuevaAlerta);
 							}
 						}
 
@@ -139,12 +143,13 @@
 	}
 
 	// Parar el Monitoreo por el Usuario
-	private async Task PararMonitoreo()
+	private void PararMonitoreo()
 	{
 		MonitorEstado.monitoreoActivo = false;
 	}
 
-	public void Dispose()
+	// Limpiar Eventos
+	public void LimpiarEventos()
 	{
 		MonitorEstado.onStateChanged -= StateHasChanged;
 	}

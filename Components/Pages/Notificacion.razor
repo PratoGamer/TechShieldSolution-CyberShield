@@ -1,4 +1,5 @@
-﻿<div class="d-flex flex-column gap-2 p-2">
+﻿<!-- Componente Hijo de Notificaciones -->
+<div class="d-flex flex-column gap-2 p-2">
 
 	<!-- ForEach para Actualizar Automaticamente -->
 	@foreach(var incidencia in ListaIncidencias)
@@ -13,7 +14,6 @@
 </div>
 
 @code {
-
 	// Recibir Parametros del Padre
 	[Parameter]
 	public List<String> ListaIncidencias { get; set; } = new();
