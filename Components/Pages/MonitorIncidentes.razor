@@ -1,6 +1,7 @@
 ﻿@using System.IO
 @using Services
-@inject LogService logService
+@inject LogService LogService
+@inject MonitorEstado MonitorEstado
 
 <div class="bg-secondary bg-opacity-10 p-2 rounded-3 shadow-sm text-center mb-3 border border-secondary border-opacity-25">
 
@@ -12,9 +13,9 @@
 
 		<button class="btn btn-success btn-sm px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2" 
 				@onclick="IniciarMonitoreo"
-				disabled="@monitoreoActivo">
+				disabled="@MonitorEstado.monitoreoActivo">
 
-				@if(monitoreoActivo){
+				@if(MonitorEstado.monitoreoActivo){
 
 				<span><i class="bi bi-box-arrow-in-down me-2"></i> Leyendo Archivos...</span>
 
@@ -29,7 +30,7 @@
 
 		<button class="btn btn-danger btn-sm px-3 py-2 shadow-sm d-inline-flex align-items-center gap-2"
 				@onclick="PararMonitoreo"
-				disabled="@(!monitoreoActivo)">
+				disabled="@(!MonitorEstado.monitoreoActivo)">
 
 			<span><i class="bi bi-stop-circle me-2"></i> Detener Lectura</span>
 
@@ -43,7 +44,7 @@
 			<h4 class="h6 text-uppercase fw-bold text-secondary m-0">Historial de Alertas</h4>
 		</div>
 
-		<Notificacion ListaIncidencias="listaIncidencias" />
+		<Notificacion ListaIncidencias="MonitorEstado.listaIncidencias" />
 
 	</div>
 
@@ -51,28 +52,101 @@
 
 
 @code {
-	private List<String> listaIncidencias = new List<String>();
-	private String codigo = "ERR_AUTH_FAIL";
-	private bool monitoreoActivo = false;
 
-	private async Task DispararIncidencia()
+	// Ruta de los Archivos Log
+	private string rutaArchivoLog = "";
+
+	protected override void OnInitialized()
 	{
-		// Mostrar una Alerta
-		string horaActual = DateTime.Now.ToString("HH:mm:ss");
-		listaIncidencias.Add($"¡ALERTA DE SEGURIDAD! El Evento {codigo}: {horaActual}, ha superado las 50 apariciones críticas");
+		// Obtener la Carpeta de Descargas del Usuario
+		string perfilUsuario = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+		rutaArchivoLog = Path.Combine(perfilUsuario, "Downloads", "servidor1.log");
 
-		// Guardar un Archivo de Log
-		// Hacer algo
+		MonitorEstado.onStateChanged += StateHasChanged;
+
+		System.Diagnostics.Debug.WriteLine($"Ruta Archivo Log: {rutaArchivoLog}");
+
 	}
 
 	private async Task IniciarMonitoreo()
 	{
-		monitoreoActivo = true;
+		// No Entrar si ya Esta Activo
+		if (MonitorEstado.monitoreoActivo)
+		{
+			return;
+		}	
+
+		MonitorEstado.monitoreoActivo = true;
+
+		// Iniciar el Monitoreo
+		while (MonitorEstado.monitoreoActivo)
+		{
+
+			// Usar Try-Catch para la Lectura del Archivo
+			try
+			{
+				// Procesar el Archivo Log
+				if (File.Exists(rutaArchivoLog))
+				{
+					// Leer el Archivo Log
+					List<string> LineasArchivo = await LogService.LeerLogAsincrono(rutaArchivoLog);
+
+					// Recorrer los Codigos a Monitorear
+					foreach (string codigoActual in MonitorEstado.codigosErrores)
+					{
+						// Contar Cantidad de Errores
+						int contApariciones = LineasArchivo.Count(linea => linea.Contains(codigoActual, StringComparison.OrdinalIgnoreCase));
+
+						// Guardar el Conteo en el Diccionario
+						await MonitorEstado.ActualizarContador(codigoActual, contApariciones);
+
+						// Verificar si el Codigo Aparece mas de 50 Veces
+						if (contApariciones >= 2)
+						{
+							bool reportado = await MonitorEstado.Reportado(codigoActual);
+
+							// Verificar si ya fue Reportado para Evitar Repeticones
+							if (!reportado)
+							{
+								string horaActual = DateTime.Now.ToString("HH:mm:ss");
+								string nuevaAlerta = $"¡ALERTA DE SEGURIDAD! El Evento {codigoActual}: {horaActual}, ha superado las 50 apariciones críticas.";
+								await MonitorEstado.AgregarAlertaAsincrono(nuevaAlerta);
+							}
+						}
+
+					}
+
+					MonitorEstado.NotificarCambioEstado();
+
+				}
+				// El Archivo no Existe
+				else
+				{
+					System.Diagnostics.Debug.WriteLine($"Advertencia: El archivo {rutaArchivoLog} no existe.");
+				}
+			}
+			// Por si Acaso un Error
+			catch (Exception ex)
+			{
+				System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+			}
+
+			// Dar un Retardo para No Sobrecargar el Hilo
+			await Task.Delay(2000);
+
+		}
+
 	}
 
+	// Parar el Monitoreo por el Usuario
 	private async Task PararMonitoreo()
 	{
-		monitoreoActivo = false;
+		MonitorEstado.monitoreoActivo = false;
+	}
+
+	public void Dispose()
+	{
+		MonitorEstado.onStateChanged -= StateHasChanged;
 	}
 
 }

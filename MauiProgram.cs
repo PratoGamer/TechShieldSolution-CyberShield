@@ -16,9 +16,10 @@ namespace TechShieldSolution_CyberShield
 
             builder.Services.AddMauiBlazorWebView();
             builder.Services.AddSingleton<Services.LogService>();
+            builder.Services.AddSingleton<Services.MonitorEstado>();
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
 

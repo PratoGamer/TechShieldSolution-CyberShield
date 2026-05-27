@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Microsoft.Maui.Controls.Shapes;
+using System;
 using System.Collections.Generic;
-using System.Text;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace TechShieldSolution_CyberShield.Services
@@ -25,7 +26,17 @@ namespace TechShieldSolution_CyberShield.Services
 
                 // Abrir Stream de Forma Segura
                 using var stream = new FileStream(rutaArchivo, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var reader = new StreamReader(stream);
 
+                // Leer el Archivo por Cada Linea de Forma Asincrona
+                string? linea;
+                while ((linea = await reader.ReadLineAsync()) != null)
+                {
+                    if (!string.IsNullOrWhiteSpace(linea))
+                    {
+                        lineas.Add(linea);
+                    }
+                }
 
             }
             catch(Exception ex) 
@@ -36,14 +47,6 @@ namespace TechShieldSolution_CyberShield.Services
 
             return lineas;
 
-        }
-
-        public string ObternerBootstrapColor(string lineaLog)
-        {
-            if (lineaLog.Contains("[ERROR]", StringComparison.OrdinalIgnoreCase)) return "text-danger fw-bold";
-            if (lineaLog.Contains("[WARN]", StringComparison.OrdinalIgnoreCase)) return "text-warning";
-            if (lineaLog.Contains("[INFO]", StringComparison.OrdinalIgnoreCase)) return "text-success";
-            return "text-secondary";
         }
 
     }
